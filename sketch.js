@@ -17,10 +17,13 @@ let human = "O";
 let currentPlayer = human;
 
 function setup() {
+  console.log("here");
   createCanvas(400, 400);
   w = width / 3;
   h = height / 3;
-  bestMove();
+
+  const isUser = localStorage.getItem("isUser") === "true" ? true : false;
+  if (!isUser) bestMove();
 }
 
 function equals3(a, b, c) {

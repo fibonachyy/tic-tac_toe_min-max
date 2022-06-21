@@ -16,7 +16,7 @@ function bestMove() {
       }
     }
   }
-  console.log("selected move", move.i, move.j);
+
   board[move.i][move.j] = ai;
   addStep(board, move.i, move.j);
   currentPlayer = human;

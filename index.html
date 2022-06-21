@@ -14,7 +14,9 @@
       flex-direction: row-reverse;
       align-items: flex-start;
       justify-content: space-evenly;
+
     }
+
 
     #graph_container {
       width: 50%;
@@ -29,7 +31,7 @@
       align-items: flex-start;
       flex-direction: row;
       flex-wrap: wrap;
-      
+
     }
 
     .step {
@@ -70,7 +72,8 @@
     li.fillX {
       background-color: rgb(248, 123, 250);
     }
-    li.fillO{
+
+    li.fillO {
       background-color: aqua;
     }
 
@@ -83,26 +86,55 @@
       background-color: rgb(3, 130, 15);
       border: 1px solid rgb(3, 130, 15);
     }
+
+    .config_container {
+      width: 100%;
+      position: absolute;
+      height: max-content;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: gray;
+      bottom: 0;
+    }
+
+    .config_container>div>label {
+      margin-left: 30px;
+    }
+    #restart_btn{
+      align-self: flex-end;
+      margin: 0 30px;
+      padding: 8px 15px;
+    }
   </style>
 </head>
 
 <body>
+  <div class="config_container">
+    <div><label>start with user: </label>
+      <input id="startWithUser" type="checkbox" /></div>
+    <button id="restart_btn" >restart</button>
+  </div>
+
   <div id="graph_container">
-   
+
   </div>
   <script>
 
-   
 
+    $("#restart_btn").on("click" , ()=>{
 
+      location.reload();
+    })
 
     function addStep(board, i, j) {
-      function getCellClass(value){
+      function getCellClass(value) {
         let res = ''
-        switch(value.toUpperCase()){
+        switch (value.toUpperCase()) {
           case 'X':
             res = "fillX"
-          break;
+            break;
           case 'O':
             res = "fillO";
             break
@@ -111,7 +143,7 @@
         }
 
         return res
-    }
+      }
 
       const selectedNum = (i * 3) + j;
 
@@ -143,31 +175,47 @@
         const ul = $('<ul>').addClass('step').append(elementList);
 
         let selectedUl = undefined;
-        if(allCel == 0){
+        if (allCel == 0) {
           let liListSelected = []
           for (let cel in flatBoard) {
             console.log(cel, selectedNum)
             let liSelect = document.createElement('li');
-            
+
             let selectedFill = cel == selectedNum ? "selected" : ''
-            let fillClass2 =  flatBoard[cel] !== '' ? "fill" : ''
-            liSelect.className = fillClass2  + " " + selectedFill
+            let fillClass2 = flatBoard[cel] !== '' ? "fill" : ''
+            liSelect.className = fillClass2 + " " + selectedFill
 
 
 
-            liListSelected.push( liSelect)
+            liListSelected.push(liSelect)
           }
           selectedLi = $('<ul>').addClass('selected').append(liListSelected);
-        } 
-        
-        if(selectedLi) 
-        list.prepend(selectedLi)
+        }
+
+        if (selectedLi)
+          list.prepend(selectedLi)
 
         if (flatBoard[allCel] == "")
           list.append(ul)
       }
 
       $(list).appendTo(`#graph_container`)
+
+
+      $("#startWithUser").on('click',
+        function (e) {
+          const isChecked = e.target.checked;
+          localStorage.setItem('isUser', isChecked)
+        })
+
+
+      $(document).ready(function () {
+        const isUser = localStorage.getItem("isUser") === "true" ? true : false
+        if (isUser == true)
+          $("#startWithUser").prop('checked', true);
+        else
+          $("#startWithUser").prop('checked', false);
+      });
 
     }
   </script>
