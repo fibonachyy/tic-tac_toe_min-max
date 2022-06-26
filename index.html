@@ -5,18 +5,24 @@
   <script src="https://cdn.jsdelivr.net/npm/p5@1.4.1/lib/p5.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"
     integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
   <meta charset="utf-8" />
   <style>
     body {
       margin: 0;
-      padding: 0;
+      padding: 20px;
       display: flex;
-      flex-direction: row-reverse;
+      flex-direction: row;
       align-items: flex-start;
-      justify-content: space-evenly;
-
+      justify-content: space-between;
     }
 
+    #mynetwork {
+      width: calc(100% - 220px);
+      height: 100vh;
+      border: 1px solid lightgray;
+    }
 
     #graph_container {
       width: 50%;
@@ -102,7 +108,8 @@
     .config_container>div>label {
       margin-left: 30px;
     }
-    #restart_btn{
+
+    #restart_btn {
       align-self: flex-end;
       margin: 0 30px;
       padding: 8px 15px;
@@ -113,111 +120,140 @@
 <body>
   <div class="config_container">
     <div><label>start with user: </label>
-      <input id="startWithUser" type="checkbox" /></div>
-    <button id="restart_btn" >restart</button>
+      <input id="startWithUser" type="checkbox" />
+    </div>
+    <button id="restart_btn">restart</button>
   </div>
 
-  <div id="graph_container">
-
-  </div>
+ 
+  <div id="mynetwork"></div>
   <script>
 
 
-    $("#restart_btn").on("click" , ()=>{
+    $("#restart_btn").on("click", () => {
 
       location.reload();
     })
 
-    function addStep(board, i, j) {
-      function getCellClass(value) {
-        let res = ''
-        switch (value.toUpperCase()) {
-          case 'X':
-            res = "fillX"
-            break;
-          case 'O':
-            res = "fillO";
-            break
-          default:
-            res = ""
-        }
-
-        return res
-      }
-
-      const selectedNum = (i * 3) + j;
-
-
-
-      const flatBoard = board.flat();
-
-
-      let list = $('<div>').addClass('choice_list');
-
-
-      for (let allCel in flatBoard) {
-        let elementList = []
-
-        for (let cel in flatBoard) {
-
-          let li = document.createElement('li');
-          let activeClass = cel == allCel ? "active" : ''
-          console.log(flatBoard[cel])
-          let fillClass = getCellClass(flatBoard[cel])
-
-          li.className = fillClass + " " + activeClass
-
-
-
-          elementList.push(li)
-        }
-
-        const ul = $('<ul>').addClass('step').append(elementList);
-
-        let selectedUl = undefined;
-        if (allCel == 0) {
-          let liListSelected = []
-          for (let cel in flatBoard) {
-            console.log(cel, selectedNum)
-            let liSelect = document.createElement('li');
-
-            let selectedFill = cel == selectedNum ? "selected" : ''
-            let fillClass2 = flatBoard[cel] !== '' ? "fill" : ''
-            liSelect.className = fillClass2 + " " + selectedFill
-
-
-
-            liListSelected.push(liSelect)
-          }
-          selectedLi = $('<ul>').addClass('selected').append(liListSelected);
-        }
-
-        if (selectedLi)
-          list.prepend(selectedLi)
-
-        if (flatBoard[allCel] == "")
-          list.append(ul)
-      }
-
-      $(list).appendTo(`#graph_container`)
-
-
-      $("#startWithUser").on('click',
-        function (e) {
-          const isChecked = e.target.checked;
-          localStorage.setItem('isUser', isChecked)
-        })
-
-
-      $(document).ready(function () {
-        const isUser = localStorage.getItem("isUser") === "true" ? true : false
-        if (isUser == true)
-          $("#startWithUser").prop('checked', true);
-        else
-          $("#startWithUser").prop('checked', false);
+    function createDataSet(parentId, boardList) {
+      let nodeAndEdge =  [...boardList].map((node, nodeIndex) => {
+        let id = String(parentId) + '-' + String(nodeIndex);
+        let label = showBOardString(node);
+        return [{
+          id,
+          label
+        }, 
+        {
+          from: String(parentId), to: id
+        }]
+      })
+      let nodes = []
+      let edges = []
+       nodeAndEdge.forEach(element => {
+        console.log(element)
+        nodes.push(element[0])
+        edges.push(element[1])
       });
+      return [nodes,edges]
+    }
+
+    function showBOardString(newBoard) {
+      
+      let result = "";
+      for (let i = 0; i <= 2; i++) {
+        for (let cellRow of newBoard) {
+          result += cellRow[i] !== "" ? cellRow[i] + " " : " - "
+        }
+        result += "\n"
+      }
+      return result
+    }
+
+    function getNexBoardList(newBoard, index) {
+      let zIndex = index
+      let cloneBoard = _.cloneDeep(newBoard);
+      let isFindIndex = false
+      for (let cellRow in newBoard) {
+        if (isFindIndex) continue;
+        for (let cell in newBoard[cellRow]) {
+          if (isFindIndex) continue;
+          if (newBoard[cellRow][cell] === "" || newBoard[cellRow][cell] == "Z") {
+            console.log('1')
+            if (zIndex == 1) {
+              
+              isFindIndex = true;
+              cloneBoard[cellRow][cell] = "Z"
+            } else {
+              zIndex--;
+            }
+
+          }
+        }
+      }
+      console.log({cloneBoard})
+      return cloneBoard
+    }
+
+   
+    function drawData(nodeList, edgeList){
+      var nodes = new vis.DataSet([...nodeList]);
+
+    // create an array with edges
+    var edges = new vis.DataSet([...edgeList]);
+    var container = document.getElementById("mynetwork");
+    var data = {
+      nodes: nodes,
+      edges: edges,
+    };
+    var options = {
+      autoResize: true,
+      height: '700px',
+      clickToUse: false,
+      layout: {
+        hierarchical: {
+          direction: 'UD',
+          sortMethod: 'directed',
+        }
+      },
+      physics: {
+         stabilization: false,
+         barnesHut: {
+              gravitationalConstant: -80,
+              springConstant: 0.1,
+              springLength: 20
+         }
+      },
+      nodes: {
+        shape: 'box',
+
+        font: {
+          size: 10,
+          color: '#000'
+        },
+        borderWidth: 1
+      },
+    };
+    var network = new vis.Network(container, data, options);
+    }
+    
+    function addStep(board, i, j) {
+      const emptyCell = board.flat().filter((item) => item == "").length;
+      let updatedBoard = _.cloneDeep(board)
+      let result = []
+      for (let i = 1; i <= emptyCell; i++) {
+        let nextBoard = getNexBoardList(updatedBoard, i)
+        result.push(nextBoard)
+        
+      }
+      console.log({result})
+      let test = createDataSet("root" , result)
+      console.log(test)
+       drawData([{id: "root" , label:showBOardString(board) },...test[0]],test[1])
 
     }
+
+
+
   </script>
   <script src="minimax.js"></script>
   <script src="sketch.js"></script>

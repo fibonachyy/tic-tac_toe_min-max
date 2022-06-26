@@ -3,11 +3,11 @@ let board = [
   ["", "", ""],
   ["", "", ""],
 ];
-addStep([
-  ["", "", ""],
-  ["", "", ""],
-  ["", "", ""],
-]);
+// addStep([
+//   ["", "", ""],
+//   ["", "", ""],
+//   ["", "", ""],
+// ]);
 
 let w; // = width / 3;
 let h; // = height / 3;
@@ -18,7 +18,7 @@ let currentPlayer = human;
 
 function setup() {
   console.log("here");
-  createCanvas(400, 400);
+  createCanvas(200, 200);
   w = width / 3;
   h = height / 3;
 
@@ -77,7 +77,7 @@ function mousePressed() {
     let j = floor(mouseY / h);
     if (board[i][j] == "") {
       board[i][j] = human;
-      addStep(board, i, j);
+      // addStep(board, i, j);
       console.log("selected with user", i, j);
       currentPlayer = ai;
       bestMove();
