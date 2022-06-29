@@ -3,10 +3,9 @@
 
 <head>
   <script src="https://cdn.jsdelivr.net/npm/p5@1.4.1/lib/p5.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+  <script  type="text/javascript" src="./jquery-3.6.0.min.js" ></script>
+  <script type="text/javascript" src="./vis-network.min.js"></script>
+  <script type="text/javascript" src="./lodash.min.js"></script>
   <meta charset="utf-8" />
   <style>
     body {
@@ -16,7 +15,12 @@
       flex-direction: row;
       align-items: flex-start;
       justify-content: space-between;
+      /* background-color: #000; */
     }
+
+    /* canvas {
+      transform: rotateZ(270deg) rotateY(180deg);
+    } */
 
     #mynetwork {
       width: calc(100% - 220px);
@@ -118,14 +122,14 @@
 </head>
 
 <body>
-  <div class="config_container">
+  <!-- <div class="config_container">
     <div><label>start with user: </label>
       <input id="startWithUser" type="checkbox" />
     </div>
     <button id="restart_btn">restart</button>
-  </div>
+  </div> -->
 
- 
+
   <div id="mynetwork"></div>
   <script>
 
@@ -135,120 +139,127 @@
       location.reload();
     })
 
-    function createDataSet(parentId, boardList) {
-      let nodeAndEdge =  [...boardList].map((node, nodeIndex) => {
-        let id = String(parentId) + '-' + String(nodeIndex);
-        let label = showBOardString(node);
-        return [{
-          id,
-          label
-        }, 
-        {
-          from: String(parentId), to: id
-        }]
+    function getNestedChild(boardData) {
+      const { parent, childs } = boardData;
+      return Object.entries(childs).map(([key, value]) => {
+        return {
+          id: key,
+          label: showBOardString(value.parent)
+        }
       })
-      let nodes = []
-      let edges = []
-       nodeAndEdge.forEach(element => {
-        console.log(element)
-        nodes.push(element[0])
-        edges.push(element[1])
-      });
-      return [nodes,edges]
     }
 
-    function showBOardString(newBoard) {
-      
-      let result = "";
-      for (let i = 0; i <= 2; i++) {
-        for (let cellRow of newBoard) {
-          result += cellRow[i] !== "" ? cellRow[i] + " " : " - "
+   function getAllNodes(objectData){
+
+    let nodeList = []
+    const iterate = (obj) => {
+      Object.keys(obj).forEach(key => {
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+          nodeList.push({
+            id: key,
+            label : showBOardString(obj[key][parent])
+          })
+          if(obj[key].childs.length > 0)
+          iterate(obj[key])
         }
-        result += "\n"
-      }
-      return result
+      })
     }
+    return nodeList
+   }
 
-    function getNexBoardList(newBoard, index) {
-      let zIndex = index
-      let cloneBoard = _.cloneDeep(newBoard);
-      let isFindIndex = false
-      for (let cellRow in newBoard) {
-        if (isFindIndex) continue;
-        for (let cell in newBoard[cellRow]) {
-          if (isFindIndex) continue;
-          if (newBoard[cellRow][cell] === "" || newBoard[cellRow][cell] == "Z") {
-            console.log('1')
-            if (zIndex == 1) {
-              
-              isFindIndex = true;
-              cloneBoard[cellRow][cell] = "Z"
-            } else {
-              zIndex--;
-            }
-
-          }
+    function createDataSet(parentId, boardList) {
+      let data =[]
+      let nodeAndEdge = [...boardList].map((node, nodeIndex) => {
+        const { parent, childs } = node
+        let nodeList = []
+        const parentNode = {
+          id: convertBoardId(parent),
+          label: showBOardString(parent)
         }
-      }
-      console.log({cloneBoard})
-      return cloneBoard
+        nodeList.push(_.cloneDeep(parentNode));
+        // data.push( getAllNodes(childs))
+        // console.log(test)
+        // const childNodeList = Object.entries(childs).map(([key, value]) => {
+        //   return {
+        //     id: key,
+        //     label: showBOardString(value)
+        //   }
+        // })
+
+        // const linkList = Object.entries(childs).map(([key, value]) => {
+        //   return {
+        //     from: convertBoardId(parent),
+        //     to: key
+        //   }
+        // })
+
+
+        // let nodes = [...childNodeList, { ...parentNode }];
+        // let edges = [...linkList]
+
+        // return [nodes, edges]
+        return []
+      })
+      console.log({data})
+      return nodeAndEdge
     }
 
-   
-    function drawData(nodeList, edgeList){
+
+    function drawData(nodeList, edgeList) {
       var nodes = new vis.DataSet([...nodeList]);
 
-    // create an array with edges
-    var edges = new vis.DataSet([...edgeList]);
-    var container = document.getElementById("mynetwork");
-    var data = {
-      nodes: nodes,
-      edges: edges,
-    };
-    var options = {
-      autoResize: true,
-      height: '700px',
-      clickToUse: false,
-      layout: {
-        hierarchical: {
-          direction: 'UD',
-          sortMethod: 'directed',
-        }
-      },
-      physics: {
-         stabilization: false,
-         barnesHut: {
-              gravitationalConstant: -80,
-              springConstant: 0.1,
-              springLength: 20
-         }
-      },
-      nodes: {
-        shape: 'box',
-
-        font: {
-          size: 10,
-          color: '#000'
+      // create an array with edges
+      var edges = new vis.DataSet([...edgeList]);
+      var container = document.getElementById("mynetwork");
+      var data = {
+        nodes: nodes,
+        edges: edges,
+      };
+      var options = {
+        autoResize: true,
+        height: '1000px',
+        clickToUse: false,
+        layout: {
+          hierarchical: {
+            direction: 'UD',
+            sortMethod: 'directed',
+            
+          }
         },
-        borderWidth: 1
-      },
-    };
-    var network = new vis.Network(container, data, options);
+        physics: {
+          stabilization: false,
+       
+        },
+        nodes: {
+          shape: 'box',
+
+          font: {
+            size: 10,
+            color: '#000'
+          },
+          borderWidth: 1
+        },
+      };
+      var network = new vis.Network(container, data, options);
     }
-    
-    function addStep(board, i, j) {
-      const emptyCell = board.flat().filter((item) => item == "").length;
-      let updatedBoard = _.cloneDeep(board)
-      let result = []
-      for (let i = 1; i <= emptyCell; i++) {
-        let nextBoard = getNexBoardList(updatedBoard, i)
-        result.push(nextBoard)
-        
-      }
-      console.log({result})
-      let test = createDataSet("root" , result)
-      console.log(test)
-       drawData([{id: "root" , label:showBOardString(board) },...test[0]],test[1])
+
+    function addStep(board, moves) {
+      // console.log(board, moves)
+
+
+
+      // let test = createDataSet(convertBoardId(board), moves)
+      // const result = test.reduce((allData, currentData) => {
+      //   return {
+      //     nodes: [...allData.nodes, ...currentData[0]],
+      //     edges: [...allData.edges, ...currentData[1]]
+      //   }
+      // }, {
+      //   nodes: [],
+      //   edges: []
+      // })
+      // console.log({ result })
+      // drawData(result.nodes, result.edges)
 
     }
 

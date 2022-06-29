@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 let board = [
   ["", "", ""],
   ["", "", ""],
@@ -75,7 +76,7 @@ function mousePressed() {
   if (currentPlayer == human) {
     let i = floor(mouseX / w);
     let j = floor(mouseY / h);
-    if (board[i][j] == "") {
+    if (board && board[i][j] == "") {
       board[i][j] = human;
       // addStep(board, i, j);
       console.log("selected with user", i, j);
